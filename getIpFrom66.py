@@ -1,6 +1,8 @@
 from urllib import request
 from bs4 import BeautifulSoup
 from distutils.filelist import findall
+import time, datetime
+import Dbcon
 
 #从66ip获取页面地址
 def getUrlFrom66Ip(page):
@@ -19,10 +21,21 @@ def getIpsFrom66Url(url):
 		tdList = tr.find_all("td")
 		ip = tdList[0].get_text()
 		port = tdList[1].get_text()
-		ipPortList.append([ip, port])
+		isinuse = 1
+		source = "66ip"
+		addtime = int(time.time())
+		ipPortList.append((ip, port, isinuse, source, addtime))
 
-	print(ipPortList, "\n")
+	# print(ipPortList, "\n")
 	return ipPortList
+
+def saveIpsToDb(ips):
+	dbcon = Dbcon.Dbcon()
+	# for list in ips :
+	print(ips)
+	sql = "insert into iplist (ip,port,isinuse,source,addtime) values(%s,%s,%s,%s,%s) on duplicate key update isinuse=values(isinuse),source=values(source),addtime=values(addtime)"
+	res = dbcon.insert(sql, ips)
+	print(res)
 
 
 
@@ -36,9 +49,9 @@ def getIps():
 		ips=getIpsFrom66Url(url)
 		if (len(ips) == 0):
 			break
-
+		# print(ips)
 		#保存列表到数据库
-		# saveIpsToDb(ips)
+		saveIpsToDb(ips)
 		#页数增加
 		page = page + 1
 
